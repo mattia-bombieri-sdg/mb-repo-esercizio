@@ -24,8 +24,8 @@ t1 as (
 ),
 
 identical_records as (
-    -- Record identici tra t0 e t1 con flag N
-    select
+    -- Record identici tra t0 e t1 con flag N, senza duplicati
+    select distinct
         t0.id,
         t0.value,
         t0.is_deleted,
@@ -36,24 +36,24 @@ identical_records as (
         on t0.id = t1.id
         and t0.value = t1.value
         and t0.is_deleted = t1.is_deleted
-        -- Escludiamo tutti i record in cui c'è un cambiamento di stato da N a Y
+        and t0.is_deleted = 'N'
+        -- Escludiamo i record che cambiano a 'Y'
         where not exists (
             select 1
             from t1 as sub_t1
             where sub_t1.id = t0.id
-              and t0.is_deleted = 'N'
               and sub_t1.is_deleted = 'Y'
         )
 ),
 
 changed_to_deleted as (
-    -- Prima parte: Record con stato 'N' nella prima tabella che cambiano a 'Y' nella seconda tabella
-    select
+    -- Prima parte: Record che cambiano da 'N' a 'Y'
+    select distinct
         t0.id,
         t0.value,
-        'N' as is_deleted, -- Lo stato precedente è 'N'
-        t0.updated_at as start_date, -- Data dalla prima tabella
-        t1.updated_at as last_date  -- Data dalla seconda tabella
+        'N' as is_deleted,
+        t0.updated_at as start_date,
+        t1.updated_at as last_date
     from t0
     inner join t1
         on t0.id = t1.id
@@ -62,13 +62,13 @@ changed_to_deleted as (
 
     union all
 
-    -- Seconda parte: Record aggiornati con stato 'Y' nella seconda tabella
-    select
+    -- Seconda parte: Record aggiornati con stato 'Y'
+    select distinct
         t1.id,
         t1.value,
-        'Y' as is_deleted, -- Lo stato attuale è 'Y'
-        t1.updated_at as start_date, -- Data dalla seconda tabella
-        cast({{ inf_date }} as date) as last_date -- La data di fine fissa
+        'Y' as is_deleted,
+        t1.updated_at as start_date,
+        cast({{ inf_date }} as date) as last_date
     from t0
     inner join t1
         on t0.id = t1.id
@@ -78,7 +78,7 @@ changed_to_deleted as (
 
 new_records as (
     -- Record nuovi presenti solo nella seconda tabella
-    select
+    select distinct
         t1.id,
         t1.value,
         t1.is_deleted,
@@ -96,12 +96,14 @@ final_table as (
     select * from changed_to_deleted
     union all
     select * from new_records
-    order by id, is_deleted
 
+    /*
     {% if is_incremental() %}
     where start_date > (select max(updated_at) 
                         from {{ this }})
     {% endif %}
+    */
 )
 
 select * from final_table
+order by id
