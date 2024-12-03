@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: is_deleted
+    database: ANALYTICS
+    schema: dbt_mb_dev_
+    tables:
+      - name: data_t0
+      - name: data_t1

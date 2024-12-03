@@ -1,0 +1,16 @@
+version: 2
+
+seeds: 
+  - name: data_t0
+    columns:
+      - name: id
+        tests: 
+          - unique
+          - not_null
+          
+  - name: data_t1
+    columns:
+      - name: id
+        tests: 
+          - unique
+          - not_null
