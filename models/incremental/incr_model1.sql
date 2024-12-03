@@ -6,13 +6,13 @@ with incr_model1 as (
 	select
 		id,
 		value,
-		is_deleted,
+		is_updated as is_deleted,
 		current_timestamp as last_update
-	from {{ ref('stg_is_deleted_0') }}
+	from {{ ref('stg_is_deleted_1') }}
 	{% if is_incremental() %}
-		where updated_at >= (select coalesce(max(updated_at), '1900-01-01') 
-								from {{ this }} )
-	{% endif %}
+		where is_deleted <> 'N'
+		--from {{ this }}
+	{% endif%}
 )
 
 select * from incr_model1
