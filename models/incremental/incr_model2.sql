@@ -1,6 +1,6 @@
 {{ config(
     materialized='incremental',
-    unique_key='id'
+    unique_key='concat(id, value, is_deleted)'
 ) }}
 
 {% set inf_date = "'2999-12-31'" %}
