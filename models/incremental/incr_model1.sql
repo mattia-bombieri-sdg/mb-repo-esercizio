@@ -20,7 +20,7 @@ t1 as (
         current_timestamp as updated_at
     from {{ ref('stg_is_deleted_1') }}
 ),
-/*
+
 -- Record che non sono stati modificati (flag N sia in t0 che in t1)
 -- La data di aggiornamento rimane quella della tabella t0
 t1_with_not_deleted_from_t0 as (
@@ -52,7 +52,7 @@ t1_with_deleted_from_t0 as (
     -- jMoCpo non dovrebbe esserci
     -- me ne manca 1
 ),
-*/
+
 -- Nuovi record solo presenti in t1
 -- La data di aggiornamento è quella di t1
 new_records_in_t1 as (
@@ -70,17 +70,15 @@ new_records_in_t1 as (
 ),
 
 final_table as (
-	--select * from t1_with_not_deleted_from_t0
-	--	union all
-	--select * from t1_with_deleted_from_t0
-	--	union all
+	select * from t1_with_not_deleted_from_t0
+		union all
+	select * from t1_with_deleted_from_t0
+		union all
 	select * from new_records_in_t1
 	
-	/*
 	{% if is_incremental() %}
 		having updated_at > ( select max(updated_at) from {{ this }} )
 	{% endif %}
-	*/
 )
 
 select * from final_table
