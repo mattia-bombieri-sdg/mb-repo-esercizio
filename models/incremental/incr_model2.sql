@@ -88,7 +88,7 @@ final_table as (
     select * from new_records
 
     {% if is_incremental() %}
-    where start_date > (select max(updated_at) 
+    where start_date > (select max(start_date) 
                         from {{ this }})
     {% endif %}
 )
