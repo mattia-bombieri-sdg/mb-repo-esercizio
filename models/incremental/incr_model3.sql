@@ -55,7 +55,7 @@ final_table as (
 	select * from new_records_in_t1
 	
 	{% if is_incremental() %}
-		having updated_at > ( select max(updated_at) 
+		having updated_at >= ( select max(updated_at) 
                             from {{ this }} )
 	{% endif %}
 	
