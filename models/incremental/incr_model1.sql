@@ -8,7 +8,7 @@ with t0 as (
         id,
         value,
         is_deleted,
-        current_timestamp - interval '5 days' as updated_at
+        updated_at
     from {{ ref('stg_is_deleted_0') }}
 ),
 
@@ -17,7 +17,7 @@ t1 as (
         id,
         value,
         is_deleted,
-        current_timestamp as updated_at
+        updated_at
     from {{ ref('stg_is_deleted_1') }}
 ),
 
@@ -31,9 +31,8 @@ t1_with_not_deleted_from_t0 as (
         t0.updated_at
     from t0
     left join t1
-        on t0.id = t1.id
-	where t1.is_deleted = 'N'
-    -- me ne mancano 3
+        on t0.id = t1.id and t0.value = t1.value
+	where t0.is_deleted = 'N' and t1.is_deleted = 'N'
 ),
 
 -- Record che sono passati da is_deleted='N' a is_deleted='Y'
@@ -48,9 +47,6 @@ t1_with_deleted_from_t0 as (
     inner join t0
         on t0.id = t1.id and t0.value = t1.value
 	where t0.is_deleted = 'N' and t1.is_deleted = 'Y'
-    -- hKmyNT non dovrebbe esserci e in più c'è due volte
-    -- jMoCpo non dovrebbe esserci
-    -- me ne manca 1
 ),
 
 -- Nuovi record solo presenti in t1
@@ -65,8 +61,6 @@ new_records_in_t1 as (
     left join t0
         on t0.id = t1.id
     where t0.id is null
-    -- mi da record assurdi
-    -- me ne mancano 5
 ),
 
 final_table as (
@@ -77,8 +71,10 @@ final_table as (
 	select * from new_records_in_t1
 	
 	{% if is_incremental() %}
-		having updated_at > ( select max(updated_at) from {{ this }} )
+		having updated_at > ( select max(updated_at) 
+                            from {{ this }} )
 	{% endif %}
+	
 )
 
 select * from final_table
