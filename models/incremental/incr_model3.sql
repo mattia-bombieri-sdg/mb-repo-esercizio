@@ -58,7 +58,6 @@ final_table as (
 		having updated_at >= ( select max(updated_at) 
                             from {{ this }} )
 	{% endif %}
-	
 )
 
 select * from final_table
